@@ -29,6 +29,17 @@ class VRPAlgorithm:
         self.dem_task_init_load = dem_task_init_load
         self.sup_task_init_load = sup_task_init_load
 
+        self.__init_magazines = {'demand': {
+                                        'Tuna': random.randint(0, 4),
+                                        'Oranges': random.randint(0, 4),
+                                        'Uran': random.randint(0, 4)
+                                    },
+                                 'supply': {
+                                        'Tuna': random.randint(0, 4),
+                                        'Oranges': random.randint(0, 4),
+                                        'Uran': random.randint(0, 4)
+                                    }}
+
     def learn(self, data: PointsGenerator):
         self.pg = data
         self.__iteration_results = {}
@@ -112,7 +123,6 @@ class VRPAlgorithm:
 
             if self.verbose and iteration % 5 == 0:
                 print(f'Iteration: {iteration}. \
-                Result: {self.__iteration_results[iteration]} \
                 Best result: {min(list(self.__iteration_results.values()))}')
 
         if not self.maximize:
@@ -170,7 +180,7 @@ class VRPAlgorithm:
             df_product = df_product[df_product[product] != 0]
 
             car_route = []
-            car_route.append(random.choice(self.pg.magazines_points))
+            car_route.append(self.__init_magazines['demand'][product])
             load_sum = self.dem_task_init_load
             for _, row in df_product.iterrows():
                 if load_sum - row[product] < 0:
@@ -198,7 +208,7 @@ class VRPAlgorithm:
             df_product = df_product[df_product[product] != 0]
 
             car_route = []
-            car_route.append(random.choice(self.pg.magazines_points))
+            car_route.append(self.__init_magazines['supply'][product])
             load_sum = self.sup_task_init_load
             for _, row in df_product.iterrows():
                 if load_sum + row[product] > VRPAlgorithm.MAX_LOAD:
@@ -232,15 +242,16 @@ class VRPAlgorithm:
 
     @property
     def learning_visualization(self):
-        plt.plot(self.__iteration_results.keys(),
-                 self.__iteration_results.values(), color='orange')
         plt.plot(self.__best_result_change.keys(),
                  self.__best_result_change.values(), color='green')
         plt.title('Learning visualization')
         plt.ylabel('objective function value')
         plt.xlabel('iteration')
-        plt.legend(['iteration result', 'best result'])
         plt.show()
+
+    @property
+    def init_magazines(self):
+        return self.__init_magazines
 
     @property
     def results(self):

@@ -21,8 +21,8 @@ class PointsGenerator:
             rnd_coord_y = random.randint(PointsGenerator.COORDINATES_RANGE[0],
                                          PointsGenerator.COORDINATES_RANGE[1])
 
-            # If true then demand - we pickup from that point
-            # Else - this is a point from which we
+            # If true then demand - we deliver there
+            # Else - this is a point from which we pickup
             if random.getrandbits(1):
                 point_type = 'demand'
             else:
@@ -45,7 +45,6 @@ class PointsGenerator:
         return self
 
     def __calculate_distances(self, points: dict) -> dict:
-
         dict_of_coords = {}
         for k, val in points.items():
             dict_of_coords[k] = val['coords']
@@ -83,7 +82,7 @@ class PointsGenerator:
             'Oranges': [],
             'Uran': []
         }
-        for i in demand_points_ids:
+        for _ in demand_points_ids:
             rnd_demand = random.randint(PointsGenerator.DEMAND_RANGE[0],
                                         PointsGenerator.DEMAND_RANGE[1])
             random.shuffle(list_of_products)
@@ -137,3 +136,8 @@ class PointsGenerator:
     @property
     def magazines_points(self):
         return self.__magazines_points
+
+    # TODO: add new property
+    # @property
+    # def visualize_points(self):
+    #   # Implement logic here...

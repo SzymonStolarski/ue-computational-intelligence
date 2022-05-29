@@ -1,3 +1,5 @@
+from json import load
+from math import prod
 import random
 
 import matplotlib.pyplot as plt
@@ -39,13 +41,17 @@ class VRPAlgorithm:
                                         'Oranges': random.randint(0, 4),
                                         'Uran': random.randint(0, 4)
                                     }}
+        self.__cat_initialization = self.__easter_egg_cat_initialization()
 
     def learn(self, data: PointsGenerator):
         self.pg = data
         self.__iteration_results = {}
         self.__best_result_change = {}
         self.__best_paths = pd.DataFrame()
-
+        print(f"Cat in tuna demand car: \
+            {self.__cat_initialization['demand_tuna']}")
+        print(f"Cat in tuna supply car: \
+            {self.__cat_initialization['supply_tuna']}")
         iteration = 0
         population = self._create_base_population(data.supply_df,
                                                   data.demand_df)
@@ -182,13 +188,27 @@ class VRPAlgorithm:
             car_route = []
             car_route.append(self.__init_magazines['demand'][product])
             load_sum = self.dem_task_init_load
-            for _, row in df_product.iterrows():
-                if load_sum - row[product] < 0:
-                    closest_magazine = self.__get_closest_magazine(row['id'])
-                    car_route.append(closest_magazine)
-                    load_sum = VRPAlgorithm.MAX_LOAD
-                car_route.append(row['id'])
-                load_sum -= row[product]
+            # Special condition if the cat travels in the demand tuna car
+            if product == 'Tuna' and self.__cat_initialization['demand_tuna']:
+                for _, row in df_product.iterrows():
+                    if (load_sum - row[product] - self.pg.distances[
+                         (car_route[-1], row['id'])]) < 0:
+                        closest_magazine = self.__get_closest_magazine(
+                            row['id'])
+                        car_route.append(closest_magazine)
+                        load_sum = VRPAlgorithm.MAX_LOAD
+                    car_route.append(row['id'])
+                    load_sum -= (self.pg.distances[(car_route[-1], row['id'])]
+                                 + row[product])
+            else:
+                for _, row in df_product.iterrows():
+                    if load_sum - row[product] < 0:
+                        closest_magazine = self.__get_closest_magazine(
+                            row['id'])
+                        car_route.append(closest_magazine)
+                        load_sum = VRPAlgorithm.MAX_LOAD
+                    car_route.append(row['id'])
+                    load_sum -= row[product]
             demand_routes[product] = car_route
             demand_distance += self.__calculate_route_distance(car_route)
 
@@ -210,26 +230,46 @@ class VRPAlgorithm:
             car_route = []
             car_route.append(self.__init_magazines['supply'][product])
             load_sum = self.sup_task_init_load
-            for _, row in df_product.iterrows():
-                if load_sum + row[product] > VRPAlgorithm.MAX_LOAD:
-                    closest_magazine = self.__get_closest_magazine(row['id'])
-                    car_route.append(closest_magazine)
-                    load_sum = 0
-                car_route.append(row['id'])
-                load_sum += row[product]
+            # Special condition if the cat travels in the supply tuna car
+            if product == 'Tuna' and self.__cat_initialization['supply_tuna']:
+                for _, row in df_product.iterrows():
+                    if (load_sum
+                        - self.pg.distances[(car_route[-1], row['id'])]
+                            + row[product]) > VRPAlgorithm.MAX_LOAD:
+                        closest_magazine = self.__get_closest_magazine(
+                            row['id'])
+                        car_route.append(closest_magazine)
+                        load_sum = 0
+                    car_route.append(row['id'])
+                    # A little simplification - the cats eats only if
+                    # the car contains at least the same amount of tuna
+                    if load_sum >= self.pg.distances[(car_route[-1],
+                                                      row['id'])]:
+                        load_sum -= self.pg.distances[(car_route[-1],
+                                                       row['id'])]
+                    load_sum += row[product]
+            else:
+                for _, row in df_product.iterrows():
+                    if load_sum + row[product] > VRPAlgorithm.MAX_LOAD:
+                        closest_magazine = self.__get_closest_magazine(
+                            row['id'])
+                        car_route.append(closest_magazine)
+                        load_sum = 0
+                    car_route.append(row['id'])
+                    load_sum += row[product]
             supply_routes[product] = car_route
             supply_distance += self.__calculate_route_distance(car_route)
 
         return supply_distance, supply_routes
 
-    def __get_closest_magazine(self, point: int):
+    def __get_closest_magazine(self, point: int) -> int:
         distance_dict = {}
         for i in self.pg.magazines_points:
             distance_dict[i] = self.pg.distances[(point, i)]
 
         return min(distance_dict, key=distance_dict.get)
 
-    def __calculate_route_distance(self, route: list[int]):
+    def __calculate_route_distance(self, route: list[int]) -> float:
         distance = 0
         for idx, i in enumerate(route):
             if idx == 0:
@@ -239,6 +279,22 @@ class VRPAlgorithm:
             previous_city = i
 
         return distance
+
+    def __easter_egg_cat_initialization(self) -> dict:
+        cat_initialization = {
+            'demand_tuna': False,
+            'supply_tuna': False
+        }
+
+        # First draw the product
+        if (random.randint(0, len(VRPAlgorithm.PRODUCTS)-1)
+           == VRPAlgorithm.PRODUCTS.index('Tuna')):
+            # If Tuna has been selected, then select on which car
+            # the cat drives (supply or demand)
+            cat_initialization[
+                random.choice(list(cat_initialization.keys()))] = True
+
+        return cat_initialization
 
     @property
     def learning_visualization(self):
@@ -269,8 +325,7 @@ class VRPAlgorithm:
     def best_paths(self):
         return self.__best_paths
 
-    @property
-    def ile_janusz_zaoszczedzil(self):
+    def ile_janusz_zaoszczedzil(self) -> None:
         start_km = self.__iteration_results[0]
         end_km = self.__best_result_change[
             len(self.__best_result_change)-1]
@@ -278,14 +333,14 @@ class VRPAlgorithm:
         print(f"Gdyby Janusz na łoko (na łoko to jeden umar)\n\
             wyznaczał trasy swoich ciężarówek, to by zrobiły\n\
             one {round(start_km, 2)} km. Czyli przy łobecnych cenach dizla,\n\
-            śr. 6.50 zł i średnim spalaniu dostawczaka 13l.,\n\
+            śr. 7.50 zł i średnim spalaniu dostawczaka 13l.,\n\
             to by wydoł {round(start_km*6.5, 2)} zł na paliwo. Kurła!")
 
         print(f"Gdyby Janusz się nos posłuchoł i kupił nosz pakiet\n\
             maszin lerningowy, to by jego ciężarówki zrobiły\n\
             {round(end_km, 2)} km, czyli o {round(start_km-end_km, 2)} km\n\
             mniej! Janusz by załoszczędził\n\
-            {round(start_km*6.5-end_km*6.5, 2)} zł! Kurła!")
+            {round(start_km*7.5-end_km*7.5, 2)} zł! Kurła!")
 
     # TODO: add property:
     # @property

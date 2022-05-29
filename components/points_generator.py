@@ -1,11 +1,13 @@
 import random
 from math import sqrt
 
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import pandas as pd
 
 
 class PointsGenerator:
-    COORDINATES_RANGE = (100, 200)
+    COORDINATES_RANGE = (0, 100)
     DEMAND_RANGE = (100, 200)
     SUPPLY_RANGE = (100, 200)
 
@@ -137,7 +139,37 @@ class PointsGenerator:
     def magazines_points(self):
         return self.__magazines_points
 
-    # TODO: add new property
-    # @property
-    # def visualize_points(self):
-    #   # Implement logic here...
+    def visualize_points(self):
+        customers = {i: j for i, j in zip(
+            list(self.__generated_points.keys()),
+            [i['coords'] for i in list(self.__generated_points.values())])
+            if i not in self.__magazines_points}
+        magazines = {i: j for i, j in zip(
+            list(self.__generated_points.keys()),
+            [i['coords']for i in list(self.__generated_points.values())])
+            if i in self.__magazines_points}
+
+        _, ax = plt.subplots(figsize=(15, 10), dpi=100)
+        plt.xlabel('X', fontsize=15)
+        plt.ylabel('Y', fontsize=15)
+        plt.title('Generated points', fontsize=20)
+        ax.scatter(list(i[0] for i in list(customers.values())),
+                   list(i[1] for i in list(customers.values())),
+                   s=250, edgecolors='blue', color='white', linewidths=2)
+        ax.scatter(list(i[0] for i in list(magazines.values())),
+                   list(i[1] for i in list(magazines.values())),
+                   s=250, edgecolors='red', color='white', linewidths=2)
+
+        for i, c in self.__generated_points.items():
+            ax.annotate(str(i), xy=c['coords'], fontsize=10, ha="center",
+                        va="center", color="black")
+
+        legend_elements = [Line2D([0], [0], marker='o', color='w',
+                           markeredgecolor='blue', label='Customer',
+                           markersize=15),
+                           Line2D([0], [0], marker='o', color='w',
+                           markeredgecolor='red', label='Magazine',
+                           markersize=15)]
+        ax.legend(handles=legend_elements, prop={'size': 13}, loc='best')
+
+        plt.show()

@@ -2,6 +2,7 @@ from json import load
 from math import prod
 import random
 
+from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -342,7 +343,66 @@ class VRPAlgorithm:
             mniej! Janusz by załoszczędził\n\
             {round(start_km*7.5-end_km*7.5, 2)} zł! Kurła!")
 
-    # TODO: add property:
-    # @property
-    # def visualize_routes(self):
-    #   # Implement logic here...
+    def visualize_routes(self):
+        coords = {i: j['coords'] for i, j in self.pg.generated_points.items()}
+        path_colors = {
+            'Demand: tuna': 'seagreen',
+            'Demand: oranges': 'lightseagreen',
+            'Demand: uran': 'deepskyblue',
+            'Supply: tuna': 'sienna',
+            'Supply: oranges': 'darkkhaki',
+            'Supply: uran': 'olive'
+        }
+        _, ax = plt.subplots(figsize=(15, 10), dpi=100)
+        plt.xlabel('X', fontsize=15)
+        plt.ylabel('Y', fontsize=15)
+        plt.title('Generated points XDDD', fontsize=20)
+
+        # White invisible circles that create the positions for the numbers
+        ax.scatter([i['coords'][0] for i in self.pg.generated_points.values()],
+                   [i['coords'][1] for i in self.pg.generated_points.values()],
+                   s=250, edgecolors='white', color='white', linewidths=2)
+
+        # Create numbers
+        for i, c in self.pg.generated_points.items():
+            ax.annotate(str(i), xy=c['coords'], fontsize=12, ha="center",
+                        va="center", color="black")
+
+        iterator = 0
+        dupa_odejmij = 0.4
+        for column in self.__best_paths.columns:
+            for product in self.__best_paths[column][0].keys():
+                particular_car_route = {i: j for i, j in coords.items()
+                                        if i in (self.__best_paths[column]
+                                        [0][product])}
+                pathcolor = list(path_colors.values())[iterator]
+                x = np.array([i[0]-dupa_odejmij for i in list(
+                    particular_car_route.values())])
+                y = np.array([i[1]-dupa_odejmij for i in list(
+                    particular_car_route.values())])
+                ax.quiver(x[:-1], y[:-1], x[1:]-x[:-1], y[1:]-y[:-1],
+                          scale_units='xy', angles='xy', scale=1.02,
+                          width=.002, headlength=4, headwidth=4,
+                          color=pathcolor)
+                iterator += 1
+                dupa_odejmij += 0.4
+
+        magazines = {i: j for i, j in zip(
+                    list(self.pg.generated_points.keys()),
+                    [i['coords']for i in list(
+                        self.pg.generated_points.values())])
+                     if i in self.pg.magazines_points}
+        ax.scatter(list(i[0] for i in list(magazines.values())),
+                   list(i[1] for i in list(magazines.values())),
+                   s=250, edgecolors='red', color='white', linewidths=2)
+
+        legend_elements = []
+        for i, j in path_colors.items():
+            legend_elements.append(Line2D([0], [0], color=j, label=i))
+        legend_elements.append(Line2D([0], [0], marker='o', color='w',
+                               markeredgecolor='red', label='Magazine',
+                               markersize=15))
+        ax.legend(handles=legend_elements, prop={'size': 13},
+                  loc='upper right')
+
+        plt.show()

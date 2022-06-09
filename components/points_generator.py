@@ -1,12 +1,23 @@
 import random
 from math import sqrt
 
-import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import matplotlib.pyplot as plt
 import pandas as pd
 
 
 class PointsGenerator:
+    """Class to randomly generate points.
+
+    The points generated with this class are used for the VRP algorithm.
+    Ranges for both the coordinates and the amount of product supply/demand
+    for given customer are defined in the class' constants space.
+
+    Parameteres
+    -----------
+    n_points : int
+        Number of points to be generated.
+    """
     COORDINATES_RANGE = (0, 100)
     DEMAND_RANGE = (100, 200)
     SUPPLY_RANGE = (100, 200)
@@ -17,6 +28,13 @@ class PointsGenerator:
         self.__distances = {}
 
     def generate_points(self):
+        """Method that starts the generation of points.
+
+        Returns
+        -------
+        self
+            An instance of self.
+        """
         for i in range(0, self.__n_points):
             rnd_coord_x = random.randint(PointsGenerator.COORDINATES_RANGE[0],
                                          PointsGenerator.COORDINATES_RANGE[1])
@@ -47,6 +65,8 @@ class PointsGenerator:
         return self
 
     def __calculate_distances(self, points: dict) -> dict:
+        """Method to 
+        """
         dict_of_coords = {}
         for k, val in points.items():
             dict_of_coords[k] = val['coords']

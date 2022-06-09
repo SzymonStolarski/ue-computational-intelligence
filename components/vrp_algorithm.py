@@ -1,4 +1,5 @@
 import random
+from IPython.display import Image
 
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
@@ -406,6 +407,7 @@ class VRPAlgorithm:
 
     @property
     def learning_visualization(self):
+        plt.figure(figsize=(15, 10), dpi=100)
         plt.plot(self.__best_result_change.keys(),
                  self.__best_result_change.values(), color='green')
         plt.title('Learning visualization')
@@ -450,6 +452,9 @@ class VRPAlgorithm:
             mniej! Janusz by załoszczędził\n\
             {round(start_km*7.5-end_km*7.5, 2)} zł! Kurła!")
 
+        pil_img = Image(filename='components/pictures/nosacz.jpg')
+        display(pil_img)
+
     def visualize_routes(self):
         """Visualize the routes after learning process.
         """
@@ -478,23 +483,23 @@ class VRPAlgorithm:
                         va="center", color="black")
 
         iterator = 0
-        dupa_odejmij = 0.4
+        subtract = 0.4
         for column in self.__best_paths.columns:
             for product in self.__best_paths[column][0].keys():
                 particular_car_route = {i: j for i, j in coords.items()
                                         if i in (self.__best_paths[column]
                                         [0][product])}
                 pathcolor = list(path_colors.values())[iterator]
-                x = np.array([i[0]-dupa_odejmij for i in list(
+                x = np.array([i[0]-subtract for i in list(
                     particular_car_route.values())])
-                y = np.array([i[1]-dupa_odejmij for i in list(
+                y = np.array([i[1]-subtract for i in list(
                     particular_car_route.values())])
                 ax.quiver(x[:-1], y[:-1], x[1:]-x[:-1], y[1:]-y[:-1],
                           scale_units='xy', angles='xy', scale=1.02,
                           width=.002, headlength=4, headwidth=4,
                           color=pathcolor)
                 iterator += 1
-                dupa_odejmij += 0.4
+                subtract += 0.4
 
         magazines = {i: j for i, j in zip(
                     list(self.pg.generated_points.keys()),

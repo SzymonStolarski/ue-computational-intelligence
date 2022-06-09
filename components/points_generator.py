@@ -65,7 +65,19 @@ class PointsGenerator:
         return self
 
     def __calculate_distances(self, points: dict) -> dict:
-        """Method to 
+        """
+        Method to calculate the euclidean distances between generated
+        points.
+
+        Parameters
+        ----------
+        points : dict
+            Generated dictionary of points with their coordinates.
+
+        Returns
+        -------
+        distances : dict
+            Dictionary with distances between pairs of points.
         """
         dict_of_coords = {}
         for k, val in points.items():
@@ -82,7 +94,24 @@ class PointsGenerator:
 
         return distances
 
-    def __create_supply_demand_dfs(self):
+    def __create_supply_demand_dfs(self) -> tuple:
+        """
+        Create the dataframes with the supply or demand for each of the
+        products for each customer.
+
+        Notes
+        -----
+        The method generates a tuple of two ``pd.DataFrames``:
+            - one for demand,
+            - second for supply.
+        Each of the dataframes contains columns with information with
+        amount of the product to be shipped to/from.
+
+        Returns
+        -------
+        tuple
+            ``pd.DataFrames`` with demand and supply.
+        """
         demand_points_ids = [x for x in self.__generated_points.keys()
                              if self.__generated_points[
                                  x]['point_type'] == 'demand']
@@ -160,6 +189,10 @@ class PointsGenerator:
         return self.__magazines_points
 
     def visualize_points(self):
+        """
+        Method to visualize the generated points with distinction to
+        customers and magazines.
+        """
         customers = {i: j for i, j in zip(
             list(self.__generated_points.keys()),
             [i['coords'] for i in list(self.__generated_points.values())])

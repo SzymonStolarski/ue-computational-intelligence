@@ -1,5 +1,3 @@
-from json import load
-from math import prod
 import random
 
 from matplotlib.lines import Line2D
@@ -13,6 +11,37 @@ from components.ga_components.mutation import *
 
 
 class VRPAlgorithm:
+    """Algorithm to solve the vechicle routing problem.
+
+    Notes
+    -----
+    The task is to find the shortest path based on some constraints.
+    As solver uses components from typical genetic algorithm: selector,
+    crossover, mutator.
+
+    Parameters
+    -----------
+    population_size : int
+        The size of the population in the genetic algorithm.
+    n_iterations : int
+        Number of learning iterations.
+    selector : BaseSelector
+        ``BaseSelector`` component for the genetic algorithm.
+    crossover : BaseCrossover
+        ``BaseCrossover`` component for the genetic algorithm.
+    mutator : BaseMutator
+        ``BaseMutator`` component for the genetic algorithm.
+    maximize : bool, default=False
+        Maximize or minimize the objective function.
+    verbose : bool, default=True
+        Show information on the learning.
+    dem_task_init_load : int, default=2000
+        The default initial load for the cars that satisfy the customers'
+        demand.
+    sup_task_init_load : int, default=0
+        The default initial load for the cars that satisfy the customers'
+        supply.
+    """
     MAX_LOAD = 2000
     PRODUCTS = ['Tuna', 'Oranges', 'Uran']
 
@@ -21,7 +50,7 @@ class VRPAlgorithm:
                  mutator: BaseMutator, maximize: bool = False,
                  verbose: bool = True,
                  dem_task_init_load: int = 2000,
-                 sup_task_init_load: int = 0) -> None:
+                 sup_task_init_load: int = 0):
         self.population_size = population_size
         self.n_iterations = n_iterations
         self.selector = selector
@@ -45,6 +74,14 @@ class VRPAlgorithm:
         self.__cat_initialization = self.__easter_egg_cat_initialization()
 
     def learn(self, data: PointsGenerator):
+        """Start the learning process.
+
+        Parameters
+        ----------
+        data : PointsGenerator
+            Generated points from the ``PointsGenerator`` component, on which
+            the learning process will be carried out.
+        """
         self.pg = data
         self.__iteration_results = {}
         self.__best_result_change = {}
@@ -143,8 +180,24 @@ class VRPAlgorithm:
         return self
 
     def _create_base_population(self,
-                                supply_df: pd.DataFrame,
-                                demand_df: pd. DataFrame) -> dict:
+                                demand_df: pd.DataFrame,
+                                supply_df: pd.DataFrame) -> dict:
+        """
+        Method to create the base population for both the supply and demand
+        customers.
+
+        Parameters
+        ----------
+        demand_df : pd.DataFrame
+            Dataframe with with demand task customers.
+        supply_df : pd.DataFrame
+            Dataframe with supply task customers.
+
+        Returns
+        -------
+        base_population : dict
+            Single, base population created.
+        """
         base_population = {}
         for i in range(0, self.population_size):
             list_to_shuffle = list(supply_df['id'])\
@@ -155,6 +208,18 @@ class VRPAlgorithm:
         return base_population
 
     def _evaluate(self, population: dict) -> tuple:
+        """Method for evaluating a population.
+
+        Parameters
+        ----------
+        population : dict
+            Single population to evaluate.
+
+        Returns
+        -------
+        tuple
+            Popoulation scores and routes.
+        """
         population_scores = {}
         # I need somewhere to store the routes
         # for later use on visualizations :D
@@ -174,6 +239,19 @@ class VRPAlgorithm:
         return population_scores, population_routes
 
     def __evaluate_demand_task(self, individual: list[int]) -> tuple:
+        """Evaluate the demand task based on a individual from population.
+
+        Parameters
+        ----------
+        individual : array_like
+            ``list`` of integers that represent an individual in population.
+
+        Returns
+        -------
+        tuple
+            Both the distance and routes for the demand task in an individual
+            from population.
+        """
         order = {i: j for j, i in enumerate(individual)}
 
         df_demand = self.pg.demand_df
@@ -216,6 +294,19 @@ class VRPAlgorithm:
         return demand_distance, demand_routes
 
     def __evaluate_supply_task(self, individual: list[int]) -> tuple:
+        """Evaluate the supply task based on a individual from population.
+
+        Parameters
+        ----------
+        individual : array_like
+            ``list`` of integers that represent an individual in population.
+
+        Returns
+        -------
+        tuple
+            Both the distance and routes for the supply task in an individual
+            from population.
+        """
         order = {i: j for j, i in enumerate(individual)}
 
         df_supply = self.pg.supply_df
@@ -282,6 +373,22 @@ class VRPAlgorithm:
         return distance
 
     def __easter_egg_cat_initialization(self) -> dict:
+        """
+        Method for initialization the easter egg constraint - cat driving
+        and eating tuna.
+
+        Notes
+        -----
+        In this solution there is the motive of randomness. The cat can
+        be drawn in one of the 6 cars. Only 2 of them have the tuna loaded.
+        Cat driving in the other cars is not relevant to solving the problem.
+
+        Returns
+        -------
+        cat_initialization : dict
+            Dictionary with bools that show if in one of the "tuna cars"
+            the cat has been drawn into.
+        """
         cat_initialization = {
             'demand_tuna': False,
             'supply_tuna': False
@@ -344,6 +451,8 @@ class VRPAlgorithm:
             {round(start_km*7.5-end_km*7.5, 2)} zł! Kurła!")
 
     def visualize_routes(self):
+        """Visualize the routes after learning process.
+        """
         coords = {i: j['coords'] for i, j in self.pg.generated_points.items()}
         path_colors = {
             'Demand: tuna': 'seagreen',

@@ -43,3 +43,6 @@ This project is done for the Computational Intelligence course @ University of E
 - Shiro - Project Manager
 
 <img src="components/pictures/shiro_the_cat.png" width="500" height=700>
+
+## Bugs 🐞
+🤦‍♂️ The cars stopped driving from/through magazines
